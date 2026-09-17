@@ -1,7 +1,11 @@
+import os
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
 from security import (
     hash_password,
     verify_password,
@@ -26,6 +30,8 @@ from schemas import (
     RoleChangeRequest,
 )
 
+load_dotenv()
+
 
 # ============================================================
 # INITIALIZATION
@@ -38,6 +44,173 @@ oauth2_scheme = OAuth2PasswordBearer(
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# ============================================================
+# INITIAL DATABASE SETUP
+# ============================================================
+
+def initialize_database():
+    db = SessionLocal()
+
+    try:
+
+        # ----------------------------------------------------
+        # 1. Create default roles
+        # ----------------------------------------------------
+
+        default_roles = [
+            "Admin",
+            "User",
+            "Super Admin"
+        ]
+
+        for role_name in default_roles:
+
+            existing_role = db.query(models.Role).filter(
+                models.Role.name == role_name
+            ).first()
+
+            if existing_role is None:
+
+                new_role = models.Role(
+                    name=role_name
+                )
+
+                db.add(new_role)
+
+        db.commit()
+
+        # ----------------------------------------------------
+        # 2. Get Super Admin role
+        # ----------------------------------------------------
+
+        super_admin_role = db.query(models.Role).filter(
+            models.Role.name == "Super Admin"
+        ).first()
+
+        if super_admin_role is None:
+
+            raise Exception(
+                "Super Admin role could not be created"
+            )
+
+        # ----------------------------------------------------
+        # 3. Check whether a Super Admin already exists
+        # ----------------------------------------------------
+
+        existing_super_admin = (
+            db.query(models.UserRole)
+            .filter(
+                models.UserRole.role_id == super_admin_role.id
+            )
+            .first()
+        )
+
+        # ----------------------------------------------------
+        # 4. Create initial Super Admin if none exists
+        # ----------------------------------------------------
+
+        if existing_super_admin is None:
+
+            admin_name = os.getenv(
+                "INITIAL_SUPER_ADMIN_NAME"
+            )
+
+            admin_email = os.getenv(
+                "INITIAL_SUPER_ADMIN_EMAIL"
+            )
+
+            admin_password = os.getenv(
+                "INITIAL_SUPER_ADMIN_PASSWORD"
+            )
+
+            if (
+                not admin_name
+                or not admin_email
+                or not admin_password
+            ):
+
+                raise Exception(
+                    "Initial Super Admin environment variables are missing"
+                )
+
+            # ------------------------------------------------
+            # Check whether this email already exists
+            # ------------------------------------------------
+
+            existing_user = db.query(models.User).filter(
+                models.User.email == admin_email
+            ).first()
+
+            if existing_user is not None:
+
+                admin_user = existing_user
+
+                # Remove existing role mapping if present
+                existing_mapping = db.query(
+                    models.UserRole
+                ).filter(
+                    models.UserRole.user_id == admin_user.id
+                ).first()
+
+                if existing_mapping is None:
+
+                    new_mapping = models.UserRole(
+                        user_id=admin_user.id,
+                        role_id=super_admin_role.id
+                    )
+
+                    db.add(new_mapping)
+
+                else:
+
+                    existing_mapping.role_id = super_admin_role.id
+
+            else:
+
+                # ------------------------------------------------
+                # Create the initial Super Admin user
+                # ------------------------------------------------
+
+                admin_user = models.User(
+                    name=admin_name,
+                    email=admin_email,
+                    password=hash_password(admin_password)
+                )
+
+                db.add(admin_user)
+                db.commit()
+                db.refresh(admin_user)
+
+                # ------------------------------------------------
+                # Assign Super Admin role
+                # ------------------------------------------------
+
+                new_mapping = models.UserRole(
+                    user_id=admin_user.id,
+                    role_id=super_admin_role.id
+                )
+
+                db.add(new_mapping)
+
+            db.commit()
+
+            print(
+                f"Initial Super Admin ready: {admin_user.email}"
+            )
+
+        else:
+
+            print(
+                "Super Admin already exists. No new Super Admin created."
+            )
+
+    finally:
+
+        db.close()
+
+# Run initial database setup
+initialize_database()
 
 # Create FastAPI application
 app = FastAPI()
