@@ -971,3 +971,207 @@ select {
     font-size: 27px;
   }
 }
+/* Demo Role Login */
+
+.demo-role-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e5e0;
+}
+
+.demo-role-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b6b63;
+  text-align: center;
+}
+
+.demo-role-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.demo-role-buttons button {
+  padding: 10px 8px;
+  border: 1px solid #d8d8d0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #34342f;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.demo-role-buttons button:hover {
+  background: #f3f3ed;
+  border-color: #99998c;
+  transform: translateY(-1px);
+}
+
+.demo-role-buttons button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .demo-role-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+/* ================================
+   Demo Role Access
+================================ */
+
+.demo-access-card {
+  margin: 20px 0 24px;
+  padding: 18px 20px;
+  border: 1px solid #d9d9ff;
+  border-radius: 14px;
+  background: #f7f7ff;
+  box-sizing: border-box;
+}
+
+.demo-access-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.demo-access-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #eeeeff;
+  color: #5b5bf7;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.demo-access-header h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #17171c;
+}
+
+.demo-access-header p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #707078;
+}
+
+.demo-credentials {
+  margin-bottom: 15px;
+}
+
+.credential-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 7px 0;
+}
+
+.credential-row span {
+  font-size: 13px;
+  color: #72727a;
+}
+
+.credential-row strong {
+  font-size: 13px;
+  font-weight: 650;
+  color: #17171c;
+  text-align: right;
+  word-break: break-word;
+}
+
+.demo-credentials-button {
+  width: 100%;
+  min-height: 42px;
+  border: none;
+  border-radius: 9px;
+  background: #eeeeec;
+  color: #17171c;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.demo-credentials-button:hover {
+  background: #e3e3df;
+}
+
+.demo-credentials-button:active {
+  transform: scale(0.99);
+}
+
+
+/* ================================
+   Role Selection Buttons
+================================ */
+
+.role-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+.role-buttons button {
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid #dedee4;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #666675;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-buttons button:hover {
+  border-color: #bdbdc8;
+  background: #fafafa;
+}
+
+.role-buttons button.active {
+  border-color: #7777ff;
+  background: #f1f1ff;
+  color: #5757ed;
+  box-shadow: 0 0 0 2px rgba(100, 100, 255, 0.08);
+}
+
+
+/* ================================
+   Mobile
+================================ */
+
+@media (max-width: 600px) {
+
+  .role-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .credential-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .credential-row strong {
+    text-align: left;
+  }
+
+  .demo-access-card {
+    padding: 16px;
+  }
+}

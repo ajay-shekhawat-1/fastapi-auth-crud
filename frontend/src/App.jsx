@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -701,6 +701,7 @@ function UserModal({
 
 function AuthScreen({ API_URL, setToken, setUserName, setRole }) {
   const [mode, setMode] = useState("login");
+  const [selectedRole, setSelectedRole] = useState("User");
 
   const [form, setForm] = useState({
     email: "",
@@ -795,6 +796,14 @@ function AuthScreen({ API_URL, setToken, setUserName, setRole }) {
     }
   }
 
+  const fillSuperAdminCredentials = () => {
+    setForm((previous) => ({
+      ...previous,
+      email: "superadmin@gmail.com",
+      password: "Superadmin@123",
+    }));
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-panel">
@@ -883,6 +892,69 @@ function AuthScreen({ API_URL, setToken, setUserName, setRole }) {
                   placeholder="Your address"
                 />
               </div>
+            )}
+
+            {mode === "login" && (
+              <>
+                <div className="role-buttons">
+                  <button
+                    type="button"
+                    className={selectedRole === "User" ? "active" : ""}
+                    onClick={() => setSelectedRole("User")}
+                  >
+                    User
+                  </button>
+
+                  <button
+                    type="button"
+                    className={selectedRole === "Admin" ? "active" : ""}
+                    onClick={() => setSelectedRole("Admin")}
+                  >
+                    Admin
+                  </button>
+
+                  <button
+                    type="button"
+                    className={selectedRole === "Super Admin" ? "active" : ""}
+                    onClick={() => setSelectedRole("Super Admin")}
+                  >
+                    Super Admin
+                  </button>
+                </div>
+
+                {selectedRole === "Super Admin" && (
+                  <div className="demo-access-card">
+                    <div className="demo-access-header">
+                      <div className="demo-access-icon">🛡</div>
+
+                      <div>
+                        <h3>Super Admin Demo Access</h3>
+                        <p>Use the demo account to explore Super Admin features.</p>
+                      </div>
+                    </div>
+
+                    <div className="demo-credentials">
+                      <div className="credential-row">
+                        <span>Email</span>
+                        <strong>superadmin@gmail.com</strong>
+                      </div>
+
+                      <div className="credential-row">
+                        <span>Password</span>
+                        <strong>Superadmin@123</strong>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="demo-credentials-button"
+                      onClick={fillSuperAdminCredentials}
+                    >
+                      Use Demo Credentials
+                    </button>
+                  </div>
+                )}
+              </>
             )}
 
             <button className="auth-submit" disabled={loading}>

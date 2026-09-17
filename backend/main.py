@@ -338,6 +338,21 @@ def require_super_admin(
         )
 
     return current_user
+
+def get_super_admin_count(db: Session):
+    super_admin_role = db.query(models.Role).filter(
+        models.Role.name == "Super Admin"
+    ).first()
+
+    if super_admin_role is None:
+        return 0
+
+    count = db.query(models.UserRole).filter(
+        models.UserRole.role_id == super_admin_role.id
+    ).count()
+
+    return count
+
 # ============================================================
 # HOME
 # ============================================================
@@ -702,6 +717,26 @@ def delete_user(
             detail="User not found"
         )
 
+    target_user_role = (
+        db.query(models.UserRole)
+        .filter(models.UserRole.user_id == user_id)
+        .first()
+    )
+
+    if target_user_role is not None:
+        target_role = db.query(models.Role).filter(
+            models.Role.id == target_user_role.role_id
+        ).first()
+
+        if target_role is not None and target_role.name == "Super Admin":
+            super_admin_count = get_super_admin_count(db)
+
+            if super_admin_count <= 1:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="The last Super Admin cannot be deleted"
+                )
+
     # Do not allow an admin to delete themselves
     if user.id == current_user.id:
         raise HTTPException(
@@ -734,7 +769,7 @@ def change_user_role(
     current_user: models.User = Depends(require_super_admin),
     db: Session = Depends(get_db)
 ):
-    # Find target user
+    # 1. Find target user
     target_user = db.query(models.User).filter(
         models.User.id == user_id
     ).first()
@@ -745,7 +780,7 @@ def change_user_role(
             detail="User not found"
         )
 
-    # Find requested role
+    # 2. Find new role
     new_role = db.query(models.Role).filter(
         models.Role.id == role_data.role_id
     ).first()
@@ -756,7 +791,7 @@ def change_user_role(
             detail="Role not found"
         )
 
-    # Find existing role mapping
+    # 3. Find current role mapping
     user_role = db.query(models.UserRole).filter(
         models.UserRole.user_id == user_id
     ).first()
@@ -767,7 +802,31 @@ def change_user_role(
             detail="User role mapping not found"
         )
 
-    # Update role
+    # 4. Find current role
+    current_role = db.query(models.Role).filter(
+        models.Role.id == user_role.role_id
+    ).first()
+
+    if current_role is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Current role not found"
+        )
+
+    # 5. Prevent removing the last Super Admin
+    if (
+        current_role.name == "Super Admin"
+        and new_role.name != "Super Admin"
+    ):
+        super_admin_count = get_super_admin_count(db)
+
+        if super_admin_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one Super Admin must always exist"
+            )
+
+    # 6. Change role
     user_role.role_id = new_role.id
 
     db.commit()
@@ -795,7 +854,7 @@ def change_user_role(
 def create_role(
     role: RoleCreate,
     db: Session = Depends(get_db),
-    admin_role = Depends(require_admin)
+    current_user: models.User = Depends(require_super_admin)
 ):
     new_role = models.Role(
         name=role.name
@@ -854,7 +913,7 @@ def update_role(
     role_id: int,
     role_data: RoleUpdate,
     db: Session = Depends(get_db),
-    admin_role = Depends(require_admin)
+    current_user: models.User = Depends(require_super_admin)
 ):
     role = db.query(models.Role).filter(
         models.Role.id == role_id
@@ -882,7 +941,7 @@ def update_role(
 def delete_role(
     role_id: int,
     db: Session = Depends(get_db),
-    admin_role = Depends(require_admin)
+    current_user: models.User = Depends(require_super_admin)
 ):
     role = db.query(models.Role).filter(
         models.Role.id == role_id
@@ -918,7 +977,7 @@ def delete_role(
 def create_user_role(
     user_role: UserRoleCreate,
     db: Session = Depends(get_db),
-    admin_role = Depends(require_admin)
+    current_user: models.User = Depends(require_super_admin)
 ):
     # Check user
     user = db.query(models.User).filter(
@@ -1001,7 +1060,7 @@ def update_user_role(
     user_role_id: int,
     user_role_data: UserRoleUpdate,
     db: Session = Depends(get_db),
-    admin_role = Depends(require_admin)
+    current_user: models.User = Depends(require_super_admin)
 ):
     # Find user-role relationship
     user_role = db.query(models.UserRole).filter(
@@ -1054,7 +1113,7 @@ def update_user_role(
 def delete_user_role(
     user_role_id: int,
     db: Session = Depends(get_db),
-    admin_role = Depends(require_admin)
+    current_user: models.User = Depends(require_super_admin)
 ):
     # Find user-role relationship
     user_role = db.query(models.UserRole).filter(
