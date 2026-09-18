@@ -219,6 +219,7 @@ app = FastAPI()
 # ============================================================
 # DATABASE DEPENDENCY
 # ============================================================
+frontend_url = os.getenv("FRONTEND_URL")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
